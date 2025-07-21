@@ -124,12 +124,14 @@
                 statusDisplay.textContent = 'Buscando dispositivos...';
                 
                 // Solicita al usuario que elija un dispositivo Bluetooth
+                // ***** CAMBIO IMPORTANTE *****
+                // Ahora aceptamos cualquier dispositivo para facilitar el diagnóstico.
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'MotorControlESP32' }], // Filtra por el nombre que pusimos en el ESP32
-                    optionalServices: [UART_SERVICE_UUID]
+                    acceptAllDevices: true,
+                    optionalServices: [UART_SERVICE_UUID] // Todavía necesitamos solicitar el servicio
                 });
 
-                statusDisplay.textContent = 'Conectando al dispositivo...';
+                statusDisplay.textContent = `Conectando a ${bluetoothDevice.name}...`;
                 
                 // Conectar al servidor GATT del dispositivo
                 const server = await bluetoothDevice.gatt.connect();
@@ -153,7 +155,12 @@
 
             } catch (error) {
                 console.error('Error en la conexión Bluetooth:', error);
-                statusDisplay.textContent = `Error: ${error.message}`;
+                // Si el usuario cancela la selección, el error es "NotFoundError". No lo mostramos como un error grave.
+                if (error.name !== 'NotFoundError') {
+                    statusDisplay.textContent = `Error: ${error.message}`;
+                } else {
+                    statusDisplay.textContent = 'Búsqueda cancelada.';
+                }
                 updateUIForState('DISCONNECTED');
             }
         });
