@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- FIX: Added Permissions-Policy meta tag to explicitly request Bluetooth access. -->
     <meta http-equiv="Permissions-Policy" content="bluetooth=*">
-    <title>El Poder del Círculo - Inversor de Giro</title>
+    <title>El Poder del Círculo - Control Híbrido</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,35 +24,47 @@
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-gray-800 bg-opacity-95 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-700">
+    <div class="bg-gray-800 bg-opacity-95 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-lg text-center border border-gray-700">
         
         <div class="mb-4 inline-block bg-gray-700 p-2 rounded-xl">
             <img id="logo" src="https://github.com/ramiropue/mi-vida-loca/blob/main/mividaloca%20LOGO.jpg?raw=true" alt="Logotipo" class="w-48 h-auto rounded-lg" onerror="this.onerror=null; this.src='https://placehold.co/192x108/3b82f6/ffffff?text=Error';">
         </div>
 
-        <h1 class="text-3xl font-bold mb-2">Inversor de Giro</h1>
+        <h1 class="text-3xl font-bold mb-2">Control Híbrido</h1>
         <p class="text-gray-400 mb-6" id="status">Estado: Desconectado</p>
 
         <!-- Controles -->
         <div id="controls" class="hidden space-y-6">
-            <!-- Panel Motor 1 -->
+            <!-- Controles Globales -->
             <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-600">
-                <h2 class="text-xl font-semibold text-white mb-3">Motor 1</h2>
-                <svg id="gear-icon-1" class="w-20 h-20 mx-auto transition-colors duration-300 state-off" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M11.078 2.25c-.917 0-1.699.663-1.85 1.542L9.05 5.85c-.09.44-.344.84-.69 1.14L6.46 8.74c-.534.433-1.28.324-1.636-.243L2.92 5.555c-.356-.568-.97-.834-1.636-.633A1.875 1.875 0 000 6.75v10.5c0 .64.364 1.21.928 1.524.564.312 1.28.102 1.636-.46l1.904-3.046c.356-.568 1.102-.677 1.636-.244l1.9 1.75c.346.3.6.7.69 1.14l.178 2.058c.15.88.932 1.542 1.85 1.542h1.844c.917 0 1.699-.663 1.85-1.542l.178-2.058c.09-.44.344-.84-.69-1.14l1.9-1.75c.534-.433 1.28-.324 1.636.244l1.904 3.046c.356-.568-.97-.834-1.636.633a1.875 1.875 0 001.636-1.524V6.75a1.875 1.875 0 00-.928-1.524c-.564-.312-1.28-.102-1.636.46l-1.904 3.046c-.356-.568-1.102-.677-1.636.244l-1.9-1.75c-.346-.3-.6-.7-.69-1.14l-.178-2.058A1.875 1.875 0 0012.922 2.25h-1.844zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg>
-                <div class="mt-4 grid grid-cols-3 gap-2">
-                    <button data-command="1" class="motor-btn bg-green-600 hover:bg-green-700 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">Adelante</button>
-                    <button data-command="0" class="motor-btn bg-gray-500 hover:bg-gray-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">Detener</button>
-                    <button data-command="2" class="motor-btn bg-pink-500 hover:bg-pink-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">Reversa</button>
+                <h2 class="text-xl font-semibold text-white mb-3">Controles Globales</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <button data-command="100" class="motor-btn bg-green-600 hover:bg-green-700 font-bold py-3 px-4 rounded-lg transition transform hover:scale-105">ENCENDER TODO</button>
+                    <button data-command="101" class="motor-btn bg-red-600 hover:bg-red-700 font-bold py-3 px-4 rounded-lg transition transform hover:scale-105">APAGAR TODO</button>
                 </div>
             </div>
-            <!-- Panel Motor 2 -->
-            <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-600">
-                <h2 class="text-xl font-semibold text-white mb-3">Motor 2</h2>
-                <svg id="gear-icon-2" class="w-20 h-20 mx-auto transition-colors duration-300 state-off" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M11.078 2.25c-.917 0-1.699.663-1.85 1.542L9.05 5.85c-.09.44-.344.84-.69 1.14L6.46 8.74c-.534.433-1.28.324-1.636-.243L2.92 5.555c-.356-.568-.97-.834-1.636-.633A1.875 1.875 0 000 6.75v10.5c0 .64.364 1.21.928 1.524.564.312 1.28.102 1.636-.46l1.904-3.046c.356-.568 1.102-.677 1.636-.244l1.9 1.75c.346.3.6.7.69 1.14l.178 2.058c.15.88.932 1.542 1.85 1.542h1.844c.917 0 1.699-.663 1.85-1.542l.178-2.058c.09-.44.344-.84-.69-1.14l1.9-1.75c.534-.433 1.28-.324 1.636.244l1.904 3.046c.356-.568-.97-.834-1.636.633a1.875 1.875 0 001.636-1.524V6.75a1.875 1.875 0 00-.928-1.524c-.564-.312-1.28-.102-1.636.46l-1.904 3.046c-.356-.568-1.102-.677-1.636.244l-1.9-1.75c-.346-.3-.6-.7-.69-1.14l-.178-2.058A1.875 1.875 0 0012.922 2.25h-1.844zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg>
-                <div class="mt-4 grid grid-cols-3 gap-2">
-                    <button data-command="11" class="motor-btn bg-green-600 hover:bg-green-700 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">Adelante</button>
-                    <button data-command="10" class="motor-btn bg-gray-500 hover:bg-gray-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">Detener</button>
-                    <button data-command="12" class="motor-btn bg-pink-500 hover:bg-pink-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">Reversa</button>
+
+            <!-- Controles Individuales -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Panel Motor 1 -->
+                <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-600">
+                    <h2 class="text-xl font-semibold text-white mb-3">Motor 1</h2>
+                    <svg id="gear-icon-1" class="w-20 h-20 mx-auto transition-colors duration-300 state-off" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M11.078 2.25c-.917 0-1.699.663-1.85 1.542L9.05 5.85c-.09.44-.344.84-.69 1.14L6.46 8.74c-.534.433-1.28.324-1.636-.243L2.92 5.555c-.356-.568-.97-.834-1.636-.633A1.875 1.875 0 000 6.75v10.5c0 .64.364 1.21.928 1.524.564.312 1.28.102 1.636-.46l1.904-3.046c.356-.568 1.102-.677 1.636-.244l1.9 1.75c.346.3.6.7.69 1.14l.178 2.058c.15.88.932 1.542 1.85 1.542h1.844c.917 0 1.699-.663 1.85-1.542l.178-2.058c.09-.44.344-.84-.69-1.14l1.9-1.75c.534-.433 1.28-.324 1.636.244l1.904 3.046c.356-.568-.97-.834-1.636.633a1.875 1.875 0 001.636-1.524V6.75a1.875 1.875 0 00-.928-1.524c-.564-.312-1.28-.102-1.636.46l-1.904 3.046c-.356-.568-1.102-.677-1.636.244l-1.9-1.75c-.346-.3-.6-.7-.69-1.14l-.178-2.058A1.875 1.875 0 0012.922 2.25h-1.844zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg>
+                    <div class="mt-4 grid grid-cols-3 gap-2">
+                        <button data-command="1" class="motor-btn bg-teal-600 hover:bg-teal-700 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">▶</button>
+                        <button data-command="0" class="motor-btn bg-gray-500 hover:bg-gray-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">■</button>
+                        <button data-command="2" class="motor-btn bg-pink-500 hover:bg-pink-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">◀</button>
+                    </div>
+                </div>
+                <!-- Panel Motor 2 -->
+                <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-600">
+                    <h2 class="text-xl font-semibold text-white mb-3">Motor 2</h2>
+                    <svg id="gear-icon-2" class="w-20 h-20 mx-auto transition-colors duration-300 state-off" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M11.078 2.25c-.917 0-1.699.663-1.85 1.542L9.05 5.85c-.09.44-.344.84-.69 1.14L6.46 8.74c-.534.433-1.28.324-1.636-.243L2.92 5.555c-.356-.568-.97-.834-1.636-.633A1.875 1.875 0 000 6.75v10.5c0 .64.364 1.21.928 1.524.564.312 1.28.102 1.636-.46l1.904-3.046c.356-.568 1.102-.677 1.636-.244l1.9 1.75c.346.3.6.7.69 1.14l.178 2.058c.15.88.932 1.542 1.85 1.542h1.844c.917 0 1.699-.663 1.85-1.542l.178-2.058c.09-.44.344-.84-.69-1.14l1.9-1.75c.534-.433 1.28-.324 1.636.244l1.904 3.046c.356-.568-.97-.834-1.636.633a1.875 1.875 0 001.636-1.524V6.75a1.875 1.875 0 00-.928-1.524c-.564-.312-1.28-.102-1.636.46l-1.904 3.046c-.356-.568-1.102-.677-1.636.244l-1.9-1.75c-.346-.3-.6-.7-.69-1.14l-.178-2.058A1.875 1.875 0 0012.922 2.25h-1.844zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /></svg>
+                    <div class="mt-4 grid grid-cols-3 gap-2">
+                        <button data-command="11" class="motor-btn bg-teal-600 hover:bg-teal-700 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">▶</button>
+                        <button data-command="10" class="motor-btn bg-gray-500 hover:bg-gray-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">■</button>
+                        <button data-command="12" class="motor-btn bg-pink-500 hover:bg-pink-600 font-bold py-2 px-3 rounded-lg transition transform hover:scale-105">◀</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -69,7 +80,7 @@
         const controlsDiv = document.getElementById('controls');
         const gearIcon1 = document.getElementById('gear-icon-1');
         const gearIcon2 = document.getElementById('gear-icon-2');
-        const motorButtons = document.querySelectorAll('.motor-btn');
+        const allButtons = document.querySelectorAll('.motor-btn');
 
         const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
@@ -91,16 +102,11 @@
                 device.addEventListener('gattserverdisconnected', onDisconnected);
             } catch (error) {
                 console.error('Error:', error);
-                // FIX: Added specific error handling for permissions issues.
-                if (error.name === 'SecurityError') {
-                    statusDisplay.innerHTML = 'Error de Permisos: El acceso a Bluetooth no está permitido.<br>Asegúrate de usar HTTPS y de que el navegador tenga permisos.';
-                } else {
-                    statusDisplay.textContent = `Error: ${error.message}`;
-                }
+                statusDisplay.textContent = `Error: ${error.message}`;
             }
         });
 
-        motorButtons.forEach(button => {
+        allButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const command = parseInt(button.dataset.command);
                 sendCommand(command);
@@ -111,22 +117,38 @@
             if (!bleCharacteristic) return alert('No hay conexión.');
             try {
                 await bleCharacteristic.writeValue(Uint8Array.of(command));
-                updateGearState(command);
+                updateUIState(command);
             } catch (error) {
                 console.error('Error al enviar:', error);
             }
         }
 
-        function updateGearState(command) {
+        function updateUIState(command) {
+            // Global commands
+            if (command === 100) {
+                setGearState(gearIcon1, 1);
+                setGearState(gearIcon2, 1);
+                return;
+            }
+            if (command === 101) {
+                setGearState(gearIcon1, 0);
+                setGearState(gearIcon2, 0);
+                return;
+            }
+            
+            // Individual commands
             const motorId = command < 10 ? 1 : 2;
             const gearIcon = motorId === 1 ? gearIcon1 : gearIcon2;
             const state = command % 10; // 0=off, 1=forward, 2=reverse
+            setGearState(gearIcon, state);
+        }
 
-            gearIcon.className = 'w-20 h-20 mx-auto transition-colors duration-300'; // Reset classes
+        function setGearState(icon, state) {
+            icon.className = 'w-20 h-20 mx-auto transition-colors duration-300'; // Reset classes
             switch (state) {
-                case 0: gearIcon.classList.add('state-off'); break;
-                case 1: gearIcon.classList.add('state-forward'); break;
-                case 2: gearIcon.classList.add('state-reverse'); break;
+                case 0: icon.classList.add('state-off'); break;
+                case 1: icon.classList.add('state-forward'); break;
+                case 2: icon.classList.add('state-reverse'); break;
             }
         }
 
@@ -135,9 +157,8 @@
             bleCharacteristic = null;
             connectButton.classList.remove('hidden');
             controlsDiv.classList.add('hidden');
-            [gearIcon1, gearIcon2].forEach(icon => {
-                icon.className = 'w-20 h-20 mx-auto transition-colors duration-300 state-off';
-            });
+            setGearState(gearIcon1, 0);
+            setGearState(gearIcon2, 0);
         }
     </script>
 </body>
