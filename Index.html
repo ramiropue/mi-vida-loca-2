@@ -9,26 +9,26 @@
         .container { text-align: center; background: white; padding: 2rem 3rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         h1 { margin-bottom: 0.5rem; }
 
-        /* --- NUEVO: Estilos para el indicador del motor --- */
+        /* --- Estilos para el indicador del motor --- */
         #motor-indicator {
-            font-size: 6rem; /* Icono más grande */
+            font-size: 6rem;
             margin: 1.5rem 0;
             transition: color 0.4s ease;
         }
         .motor-stopped {
-            color: #9e9e9e; /* Color gris cuando está detenido */
+            color: #9e9e9e; 
             transform: rotate(0deg);
         }
         .motor-forward {
-            color: #43a047; /* Color verde para adelante */
+            color: #43a047; /* Verde */
             animation: rotate-forward 2s linear infinite;
         }
+        /* CAMBIO: Color del icono en reversa a azul para coincidir con el botón */
         .motor-reverse {
-            color: #e53935; /* Color rojo para reversa */
+            color: #2196F3; /* Azul */
             animation: rotate-reverse 2s linear infinite;
         }
         
-        /* --- NUEVO: Animaciones de rotación --- */
         @keyframes rotate-forward {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -43,15 +43,16 @@
         .connecting { color: #f57c00; background-color: #fff3e0; }
         .connected { color: #388e3c; background-color: #e8f5e9; }
         
-        .btn { font-size: 1.2rem; padding: 1rem 2rem; margin: 0.5rem; border: none; border-radius: 8px; cursor: pointer; color: white; transition: background-color 0.3s, transform 0.1s; min-width: 220px; }
+        .btn { font-size: 1.2rem; padding: 1rem 1.5rem; margin: 0.5rem; border: none; border-radius: 8px; cursor: pointer; color: white; transition: background-color 0.3s, transform 0.1s; min-width: 150px; }
         .btn:active { transform: scale(0.98); }
-        #btn-connect { background-color: #1976d2; }
+        #btn-connect { background-color: #1976d2; width: 100%; }
         #btn-connect:hover { background-color: #1565c0; }
-        .btn-control { background-color: #555; }
-        .btn-control:disabled { background-color: #9e9e9e; cursor: not-allowed; }
-        #btn-forward { background-color: #43a047; }
-        #btn-reverse { background-color: #e53935; }
-        #btn-stop { background-color: #fdd835; color: #333; }
+
+        /* CAMBIO: Nuevos colores de los botones */
+        #btn-forward { background-color: #43a047; } /* Verde */
+        #btn-stop { background-color: #e53935; } /* Rojo */
+        #btn-back { background-color: #2196F3; } /* Azul */
+
     </style>
 </head>
 <body>
@@ -61,19 +62,20 @@
         <div id="status" class="disconnected">Desconectado</div>
 
         <div id="motor-indicator" class="motor-stopped">
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5z"/></svg>
         </div>
 
         <button id="btn-connect" class="btn">Conectar por Bluetooth</button>
         
-        <div id="controls" style="display: none;">
-            <button id="btn-forward" class="btn btn-control">Adelante</button>
-            <button id="btn-reverse" class="btn btn-control">Reversa</button>
-            <button id="btn-stop" class="btn btn-control">Detener</button>
+        <div id="controls" style="display: none; display: flex; justify-content: center;">
+            <button id="btn-forward" class="btn">Adelante</button>
+            <button id="btn-stop" class="btn">Detener</button>
+            <button id="btn-back" class="btn">Atrás</button>
         </div>
     </div>
 
     <script>
+        // ... (el JavaScript no necesita cambios, pero lo incluyo para que sea completo)
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
         const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
@@ -85,10 +87,10 @@
         const controlsDiv = document.getElementById('controls');
         
         const btnForward = document.getElementById('btn-forward');
-        const btnReverse = document.getElementById('btn-reverse');
+        // CAMBIO: Se apunta a los nuevos IDs/elementos
         const btnStop = document.getElementById('btn-stop');
+        const btnBack = document.getElementById('btn-back');
         
-        // NUEVO: Referencia al elemento del icono
         const motorIndicator = document.getElementById('motor-indicator');
 
         btnConnect.addEventListener('click', async () => {
@@ -106,8 +108,8 @@
 
                 updateStatus('Conectado ✓', 'connected');
                 btnConnect.style.display = 'none';
-                controlsDiv.style.display = 'block';
-                // Al conectar, aseguramos que el icono esté en modo detenido
+                controlsDiv.style.display = 'flex'; // Usamos flex para alinear
+
                 updateMotorIndicator(0); 
 
                 bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
@@ -124,7 +126,6 @@
             controlsDiv.style.display = 'none';
             bleDevice = null;
             bleCharacteristic = null;
-            // Al desconectar, el motor se apaga, así que actualizamos el icono
             updateMotorIndicator(0); 
         }
 
@@ -134,38 +135,37 @@
                 return;
             }
             try {
-                // Actualiza el icono INMEDIATAMENTE para una respuesta visual rápida
                 updateMotorIndicator(command); 
                 const value = Uint8Array.of(command);
                 await bleCharacteristic.writeValue(value);
                 console.log(`Comando enviado: ${command}`);
             } catch (error) {
                 console.error('Error al enviar comando:', error);
-                // Si falla, revertimos el icono a detenido
                 updateMotorIndicator(0);
                 alert(`Error: ${error.message}`);
             }
         }
         
-        // NUEVO: Función para actualizar la clase del icono según el estado
         function updateMotorIndicator(state) {
             motorIndicator.classList.remove('motor-stopped', 'motor-forward', 'motor-reverse');
             switch (state) {
-                case 0: // Detenido
+                case 0: 
                     motorIndicator.classList.add('motor-stopped');
                     break;
-                case 1: // Adelante
+                case 1: 
                     motorIndicator.classList.add('motor-forward');
                     break;
-                case 2: // Reversa
+                case 2:
+                    // La clase ahora es azul, pero el comando sigue siendo 2
                     motorIndicator.classList.add('motor-reverse');
                     break;
             }
         }
 
+        // CAMBIO: Eventos asignados a los botones correctos
         btnForward.addEventListener('click', () => sendCommand(1));
-        btnReverse.addEventListener('click', () => sendCommand(2));
         btnStop.addEventListener('click', () => sendCommand(0));
+        btnBack.addEventListener('click', () => sendCommand(2)); // El comando sigue siendo 2 para la reversa
 
         function updateStatus(message, statusClass) {
             statusDiv.textContent = message;
