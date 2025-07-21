@@ -20,6 +20,12 @@
         .state-off { color: #4b5563; }
         .state-forward { color: #2dd4bf; filter: drop-shadow(0 0 8px #2dd4bf); animation: spin-forward 4s linear infinite; }
         .state-reverse { color: #f472b6; filter: drop-shadow(0 0 8px #f472b6); animation: spin-reverse 4s linear infinite; }
+        
+        /* Estilo para botones desactivados */
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
@@ -113,13 +119,31 @@
             });
         });
 
+        function setButtonsEnabled(enabled) {
+            allButtons.forEach(btn => {
+                if (enabled) {
+                    btn.disabled = false;
+                    btn.classList.remove('btn-disabled');
+                } else {
+                    btn.disabled = true;
+                    btn.classList.add('btn-disabled');
+                }
+            });
+        }
+
         async function sendCommand(command) {
             if (!bleCharacteristic) return alert('No hay conexión.');
+            
+            setButtonsEnabled(false); // Desactivar botones
+            
             try {
                 await bleCharacteristic.writeValue(Uint8Array.of(command));
                 updateUIState(command);
             } catch (error) {
                 console.error('Error al enviar:', error);
+            } finally {
+                // Reactivar botones después de un breve momento
+                setTimeout(() => setButtonsEnabled(true), 600); 
             }
         }
 
@@ -139,12 +163,12 @@
             // Individual commands
             const motorId = command < 10 ? 1 : 2;
             const gearIcon = motorId === 1 ? gearIcon1 : gearIcon2;
-            const state = command % 10; // 0=off, 1=forward, 2=reverse
+            const state = command % 10;
             setGearState(gearIcon, state);
         }
 
         function setGearState(icon, state) {
-            icon.className = 'w-20 h-20 mx-auto transition-colors duration-300'; // Reset classes
+            icon.className = 'w-20 h-20 mx-auto transition-colors duration-300';
             switch (state) {
                 case 0: icon.classList.add('state-off'); break;
                 case 1: icon.classList.add('state-forward'); break;
