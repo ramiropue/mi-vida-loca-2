@@ -88,12 +88,13 @@
         }
 
         function updateGearState(command) {
+            // FIX: Corrected the logic for the 'off' state.
             if (command === 1) {
                 gearIcon.classList.remove('state-off');
                 gearIcon.classList.add('state-on');
-            } else {
-                gearIcon.classList.remove('state-off');
-                gearIcon.classList.add('state-on');
+            } else { // command === 0
+                gearIcon.classList.remove('state-on');
+                gearIcon.classList.add('state-off');
             }
         }
 
