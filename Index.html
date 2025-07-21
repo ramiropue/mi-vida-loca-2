@@ -3,213 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Motor BLE</title>
+    <title>Control de Motor</title>
+    <!-- Incluimos Tailwind CSS para un diseño moderno y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        /* Pequeños ajustes para una mejor experiencia */
         body {
-            font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent; /* Evita el destello azul en los botones en móviles */
         }
-        .btn {
-            transition: all 0.2s ease-in-out;
-        }
-        .btn:active {
-            transform: scale(0.95);
-        }
-        .btn-glowing-edge {
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-glowing-edge::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(transparent, #34d399, transparent 30%);
-            transform-origin: center center;
-            animation: rotate 4s linear infinite;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .btn-glowing-edge:hover::before {
-            opacity: 1;
-        }
-        @keyframes rotate {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
+        /* Estilo para los botones cuando están deshabilitados */
+        .btn:disabled {
+            cursor: not-allowed;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-900 text-white font-sans flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-md p-6 md:p-8 bg-gray-800 rounded-2xl shadow-2xl text-center border border-gray-700">
+    <div class="w-full max-w-sm bg-gray-800 rounded-2xl shadow-lg p-6 space-y-6">
         
-        <header class="mb-6">
-            <h1 class="text-4xl font-bold text-cyan-400">Control BLE</h1>
-            <p class="text-gray-400 mt-2">Controla tu motor con Web Bluetooth.</p>
-        </header>
+        <div class="text-center">
+            <h1 class="text-2xl font-bold text-cyan-400">Control de Motor</h1>
+            <p id="status" class="text-gray-400 mt-2">Desconectado. Pulsa para conectar.</p>
+        </div>
 
-        <main>
-            <!-- Botón de Conexión -->
-            <div class="mb-6">
-                <button id="btn-connect" class="btn btn-glowing-edge w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/50">
-                    Conectar al ESP32
-                </button>
-            </div>
+        <!-- Botón de Conexión -->
+        <button id="connect-btn" class="btn w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform active:scale-95">
+            Conectar a ESP32
+        </button>
 
-            <!-- Sección de Estado -->
-            <div id="status-section" class="mb-6 p-4 bg-gray-700 rounded-lg hidden">
-                <h2 class="text-lg font-semibold text-gray-300 mb-2">Estado</h2>
-                <div class="flex items-center justify-center space-x-2">
-                    <div id="status-dot" class="w-4 h-4 rounded-full bg-yellow-500"></div>
-                    <span id="status-text" class="text-xl font-bold">Desconectado</span>
-                </div>
-            </div>
+        <!-- Panel de Control del Motor -->
+        <div class="grid grid-cols-2 gap-4 pt-4">
+            <button id="left-btn" class="btn w-full bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-transform transform active:scale-95 disabled:opacity-50" disabled>
+                &#8592; Izquierda
+            </button>
+            <button id="right-btn" class="btn w-full bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-transform transform active:scale-95 disabled:opacity-50" disabled>
+                Derecha &#8594;
+            </button>
+        </div>
+        
+        <button id="stop-btn" class="btn w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-4 px-4 rounded-lg transition-transform transform active:scale-95 disabled:opacity-50" disabled>
+            &#9632; PARAR
+        </button>
 
-            <!-- Botones de Control -->
-            <div id="controls" class="grid grid-cols-2 gap-4 hidden">
-                <button id="btn-on" class="btn w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg text-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    ENCENDER
-                </button>
-                <button id="btn-off" class="btn w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg text-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    APAGAR
-                </button>
-            </div>
-        </main>
-
-        <footer class="mt-8">
-            <p id="log-message" class="text-sm text-gray-500 h-4"></p>
-        </footer>
     </div>
 
     <script>
-        // --- Elementos del DOM ---
-        const connectButton = document.getElementById('btn-connect');
-        const onButton = document.getElementById('btn-on');
-        const offButton = document.getElementById('btn-off');
-        const statusSection = document.getElementById('status-section');
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        const controlsDiv = document.getElementById('controls');
-        const logMessage = document.getElementById('log-message');
+        // --- Referencias a los elementos del DOM ---
+        const connectButton = document.getElementById('connect-btn');
+        const stopButton = document.getElementById('stop-btn');
+        const leftButton = document.getElementById('left-btn');
+        const rightButton = document.getElementById('right-btn');
+        const statusDisplay = document.getElementById('status');
 
-        // --- Variables Globales de Bluetooth ---
-        let bleDevice;
+        // --- Variables Globales de Web Bluetooth ---
+        let bluetoothDevice;
         let motorCharacteristic;
 
-        // --- UUIDs del Servicio y Característica BLE ---
-        // Deben coincidir exactamente con los del código del ESP32
-        const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-        const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        // UUID del servicio de puerto serie estándar de Bluetooth
+        const UART_SERVICE_UUID = "00001101-0000-1000-8000-00805f9b34fb";
+        // El UUID de la característica puede variar, pero este es el estándar para TX/RX
+        const UART_CHARACTERISTIC_UUID = "00001101-0000-1000-8000-00805f9b34fb";
 
-        // --- Funciones de la UI ---
-        function showLog(message) {
-            console.log(message);
-            logMessage.textContent = message;
-        }
 
-        function updateUIForConnection(device) {
-            showLog(`Conectado a ${device.name}`);
-            statusSection.classList.remove('hidden');
-            controlsDiv.classList.remove('hidden');
-            connectButton.textContent = 'Desconectar';
-            statusText.textContent = 'Conectado';
-            statusDot.classList.remove('bg-yellow-500', 'bg-red-500');
-            statusDot.classList.add('bg-green-500');
-            onButton.disabled = false;
-            offButton.disabled = true; // Estado inicial es apagado
-        }
-
-        function updateUIForDisconnection() {
-            showLog('Dispositivo desconectado.');
-            statusText.textContent = 'Desconectado';
-            statusDot.classList.remove('bg-green-500');
-            statusDot.classList.add('bg-red-500');
-            connectButton.textContent = 'Conectar al ESP32';
-            onButton.disabled = true;
-            offButton.disabled = true;
-        }
-        
-        // --- Lógica de Web Bluetooth ---
-
-        async function connectToDevice() {
-            try {
-                showLog('Buscando dispositivo...');
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [SERVICE_UUID] }],
-                    optionalServices: [SERVICE_UUID]
-                });
-                
-                showLog('Conectando al servidor GATT...');
-                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                const server = await bleDevice.gatt.connect();
-
-                showLog('Obteniendo el servicio...');
-                const service = await server.getPrimaryService(SERVICE_UUID);
-
-                showLog('Obteniendo la característica...');
-                motorCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-                updateUIForConnection(bleDevice);
-
-            } catch (error) {
-                showLog(`Error: ${error.message}`);
+        // --- Lógica de la Interfaz de Usuario ---
+        function updateUIForState(state) {
+            switch(state) {
+                case 'CONNECTED_STOPPED':
+                    statusDisplay.textContent = 'Conectado: Motor Parado';
+                    statusDisplay.classList.remove('text-green-400', 'text-red-400');
+                    statusDisplay.classList.add('text-yellow-400');
+                    leftButton.disabled = false;
+                    rightButton.disabled = false;
+                    stopButton.disabled = true;
+                    connectButton.disabled = true;
+                    connectButton.textContent = 'Conectado';
+                    connectButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+                case 'CONNECTED_MOVING':
+                    statusDisplay.textContent = 'Conectado: Motor en Marcha';
+                    statusDisplay.classList.remove('text-yellow-400', 'text-red-400');
+                    statusDisplay.classList.add('text-green-400');
+                    leftButton.disabled = true;
+                    rightButton.disabled = true;
+                    stopButton.disabled = false;
+                    break;
+                case 'DISCONNECTED':
+                    statusDisplay.textContent = 'Desconectado. Pulsa para conectar.';
+                    statusDisplay.classList.remove('text-green-400', 'text-yellow-400');
+                    statusDisplay.classList.add('text-red-400');
+                    leftButton.disabled = true;
+                    rightButton.disabled = true;
+                    stopButton.disabled = true;
+                    connectButton.disabled = false;
+                    connectButton.textContent = 'Conectar a ESP32';
+                    connectButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    break;
             }
         }
 
-        function disconnectDevice() {
-            if (bleDevice && bleDevice.gatt.connected) {
-                bleDevice.gatt.disconnect();
-            } else {
-                showLog('No hay ningún dispositivo conectado.');
-            }
-        }
-
-        function onDisconnected(event) {
-            const device = event.target;
-            updateUIForDisconnection();
-        }
-        
+        // --- Función para enviar comandos ---
         async function sendCommand(command) {
             if (!motorCharacteristic) {
-                showLog('Característica no disponible.');
+                console.error('Característica no disponible.');
                 return;
             }
             try {
-                const value = new TextEncoder().encode(command);
-                await motorCharacteristic.writeValue(value);
-                showLog(`Comando enviado: ${command}`);
-
-                // Actualizar botones
-                onButton.disabled = (command === '1');
-                offButton.disabled = (command === '0');
-
+                // Los comandos se envían como un array de bytes.
+                const data = new TextEncoder().encode(command);
+                await motorCharacteristic.writeValue(data);
+                console.log(`Comando enviado: ${command}`);
             } catch (error) {
-                showLog(`Error al enviar comando: ${error.message}`);
+                console.error('Error al enviar comando:', error);
+                alert(`Error al enviar el comando: ${error.message}`);
             }
         }
 
-        // --- Event Listeners ---
-        connectButton.addEventListener('click', () => {
-            if (bleDevice && bleDevice.gatt.connected) {
-                disconnectDevice();
-            } else {
-                connectToDevice();
+        // --- Lógica de Conexión Bluetooth ---
+        connectButton.addEventListener('click', async () => {
+            try {
+                statusDisplay.textContent = 'Buscando dispositivos...';
+                
+                // Solicita al usuario que elija un dispositivo Bluetooth
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'MotorControlESP32' }], // Filtra por el nombre que pusimos en el ESP32
+                    optionalServices: [UART_SERVICE_UUID]
+                });
+
+                statusDisplay.textContent = 'Conectando al dispositivo...';
+                
+                // Conectar al servidor GATT del dispositivo
+                const server = await bluetoothDevice.gatt.connect();
+
+                // Obtener el servicio UART
+                const service = await server.getPrimaryService(UART_SERVICE_UUID);
+
+                // Obtener la característica para escribir datos
+                motorCharacteristic = await service.getCharacteristic(UART_CHARACTERISTIC_UUID);
+
+                console.log('¡Conexión exitosa!');
+                updateUIForState('CONNECTED_STOPPED');
+                
+                // Escuchar eventos de desconexión
+                bluetoothDevice.addEventListener('gattserverdisconnected', () => {
+                    console.log('Dispositivo desconectado.');
+                    motorCharacteristic = null;
+                    bluetoothDevice = null;
+                    updateUIForState('DISCONNECTED');
+                });
+
+            } catch (error) {
+                console.error('Error en la conexión Bluetooth:', error);
+                statusDisplay.textContent = `Error: ${error.message}`;
+                updateUIForState('DISCONNECTED');
             }
         });
 
-        onButton.addEventListener('click', () => sendCommand('1'));
-        offButton.addEventListener('click', () => sendCommand('0'));
+        // --- Event Listeners para los botones de control ---
+        leftButton.addEventListener('click', () => {
+            sendCommand('L');
+            updateUIForState('CONNECTED_MOVING');
+        });
 
+        rightButton.addEventListener('click', () => {
+            sendCommand('R');
+            updateUIForState('CONNECTED_MOVING');
+        });
+
+        stopButton.addEventListener('click', () => {
+            sendCommand('S');
+            updateUIForState('CONNECTED_STOPPED');
+        });
+        
         // Estado inicial de la UI
-        onButton.disabled = true;
-        offButton.disabled = true;
-
+        updateUIForState('DISCONNECTED');
     </script>
 </body>
 </html>
