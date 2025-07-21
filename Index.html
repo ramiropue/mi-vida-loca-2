@@ -59,9 +59,8 @@
         let bluetoothDevice;
         let motorCharacteristic;
 
-        // UUID del servicio de puerto serie estándar de Bluetooth
+        // UUIDs para el servicio y la característica
         const UART_SERVICE_UUID = "00001101-0000-1000-8000-00805f9b34fb";
-        // El UUID de la característica puede variar, pero este es el estándar para TX/RX
         const UART_CHARACTERISTIC_UUID = "00001101-0000-1000-8000-00805f9b34fb";
 
 
@@ -108,7 +107,6 @@
                 return;
             }
             try {
-                // Los comandos se envían como un array de bytes.
                 const data = new TextEncoder().encode(command);
                 await motorCharacteristic.writeValue(data);
                 console.log(`Comando enviado: ${command}`);
@@ -123,29 +121,24 @@
             try {
                 statusDisplay.textContent = 'Buscando dispositivos...';
                 
-                // Solicita al usuario que elija un dispositivo Bluetooth
-                // ***** CAMBIO IMPORTANTE *****
-                // Ahora aceptamos cualquier dispositivo para facilitar el diagnóstico.
+                // ***** CAMBIO CLAVE *****
+                // Se eliminó 'optionalServices' para hacer la búsqueda lo más amplia posible.
+                // Esto mostrará todos los dispositivos Bluetooth al alcance.
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [UART_SERVICE_UUID] // Todavía necesitamos solicitar el servicio
+                    acceptAllDevices: true
                 });
 
                 statusDisplay.textContent = `Conectando a ${bluetoothDevice.name}...`;
                 
-                // Conectar al servidor GATT del dispositivo
                 const server = await bluetoothDevice.gatt.connect();
 
-                // Obtener el servicio UART
+                // Una vez conectados, ahora sí intentamos obtener el servicio.
                 const service = await server.getPrimaryService(UART_SERVICE_UUID);
-
-                // Obtener la característica para escribir datos
                 motorCharacteristic = await service.getCharacteristic(UART_CHARACTERISTIC_UUID);
 
-                console.log('¡Conexión exitosa!');
+                console.log('¡Conexión exitosa y característica encontrada!');
                 updateUIForState('CONNECTED_STOPPED');
                 
-                // Escuchar eventos de desconexión
                 bluetoothDevice.addEventListener('gattserverdisconnected', () => {
                     console.log('Dispositivo desconectado.');
                     motorCharacteristic = null;
@@ -155,7 +148,6 @@
 
             } catch (error) {
                 console.error('Error en la conexión Bluetooth:', error);
-                // Si el usuario cancela la selección, el error es "NotFoundError". No lo mostramos como un error grave.
                 if (error.name !== 'NotFoundError') {
                     statusDisplay.textContent = `Error: ${error.message}`;
                 } else {
