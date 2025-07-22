@@ -3,30 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Motor BLE</title>
+    <title>Control Dual de Motores BLE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* Estilo para los botones cuando están desactivados */
-        .btn-disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-            background-color: #9ca3af; /* gray-400 */
-        }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .btn-disabled { cursor: not-allowed; opacity: 0.5; background-color: #9ca3af !important; }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-sm mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-6 text-center">
         
         <header class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Control de Motor</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Control Dual de Motores</h1>
             <p id="status" class="text-sm text-gray-500 mt-2">Desconectado</p>
         </header>
 
@@ -35,55 +27,69 @@
                 Conectar al ESP32
             </button>
 
-            <div id="controls" class="mt-6 space-y-4 hidden">
-                <div class="grid grid-cols-2 gap-4">
-                    <button id="forwardButton" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition duration-300 ease-in-out">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
-                        <span>Horario</span>
-                    </button>
-                    <button id="reverseButton" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition duration-300 ease-in-out">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
-                        <span>Antihorario</span>
-                    </button>
+            <div id="controls" class="mt-6 space-y-6 hidden">
+                <!-- Controles Motor 1 -->
+                <div class="p-4 border rounded-lg">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Motor 1</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="forwardButton1" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition"><span>Horario</span></button>
+                        <button id="reverseButton1" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition"><span>Antihorario</span></button>
+                    </div>
+                    <button id="stopButton1" class="mt-4 w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition"><span>Paro</span></button>
                 </div>
-                <button id="stopButton" class="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition duration-300 ease-in-out btn-disabled" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" /></svg>
-                    <span>Paro</span>
-                </button>
+
+                <!-- Controles Motor 2 -->
+                <div class="p-4 border rounded-lg">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Motor 2</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="forwardButton2" class="bg-sky-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-600 flex items-center justify-center space-x-2 transition"><span>Horario</span></button>
+                        <button id="reverseButton2" class="bg-sky-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-600 flex items-center justify-center space-x-2 transition"><span>Antihorario</span></button>
+                    </div>
+                    <button id="stopButton2" class="mt-4 w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition"><span>Paro</span></button>
+                </div>
             </div>
         </main>
-
     </div>
 
     <script>
         const connectButton = document.getElementById('connectButton');
         const controlsDiv = document.getElementById('controls');
-        const forwardButton = document.getElementById('forwardButton');
-        const reverseButton = document.getElementById('reverseButton');
-        const stopButton = document.getElementById('stopButton');
         const statusDisplay = document.getElementById('status');
 
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
         const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-
         let bleCharacteristic = null;
-        let motorState = 'stopped'; // 'stopped', 'forward', 'reverse'
 
-        const updateButtonState = () => {
-            if (motorState === 'stopped') {
-                forwardButton.disabled = false;
-                forwardButton.classList.remove('btn-disabled');
-                reverseButton.disabled = false;
-                reverseButton.classList.remove('btn-disabled');
-                stopButton.disabled = true;
-                stopButton.classList.add('btn-disabled');
-            } else {
-                forwardButton.disabled = true;
-                forwardButton.classList.add('btn-disabled');
-                reverseButton.disabled = true;
-                reverseButton.classList.add('btn-disabled');
-                stopButton.disabled = false;
-                stopButton.classList.remove('btn-disabled');
+        const motors = {
+            M1: {
+                state: 'stopped',
+                buttons: {
+                    forward: document.getElementById('forwardButton1'),
+                    reverse: document.getElementById('reverseButton1'),
+                    stop: document.getElementById('stopButton1'),
+                }
+            },
+            M2: {
+                state: 'stopped',
+                buttons: {
+                    forward: document.getElementById('forwardButton2'),
+                    reverse: document.getElementById('reverseButton2'),
+                    stop: document.getElementById('stopButton2'),
+                }
+            }
+        };
+
+        const updateAllButtonStates = () => {
+            for (const motorId in motors) {
+                const motor = motors[motorId];
+                const isStopped = motor.state === 'stopped';
+                motor.buttons.forward.disabled = !isStopped;
+                motor.buttons.reverse.disabled = !isStopped;
+                motor.buttons.stop.disabled = isStopped;
+
+                motor.buttons.forward.classList.toggle('btn-disabled', !isStopped);
+                motor.buttons.reverse.classList.toggle('btn-disabled', !isStopped);
+                motor.buttons.stop.classList.toggle('btn-disabled', isStopped);
             }
         };
         
@@ -91,7 +97,7 @@
             try {
                 updateStatus('Buscando el ESP32...');
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'Control Motor ESP32' }],
+                    filters: [{ name: 'Control Dual Motor ESP32' }],
                     optionalServices: [SERVICE_UUID]
                 });
                 updateStatus('Conectando...');
@@ -102,52 +108,43 @@
                 connectButton.classList.add('hidden');
                 controlsDiv.classList.remove('hidden');
                 device.addEventListener('gattserverdisconnected', onDisconnected);
-                updateButtonState();
+                updateAllButtonStates();
             } catch (error) {
-                console.error('Error en la conexión BLE:', error);
-                if (error.name === 'NotFoundError') {
-                    updateStatus('No se encontró el ESP32. Asegúrate de que está encendido y cerca.', 'error');
-                } else {
-                    updateStatus(`Error: ${error.message}`, 'error');
-                }
+                console.error('Error:', error);
+                updateStatus(error.name === 'NotFoundError' ? 'No se encontró el ESP32.' : `Error: ${error.message}`, 'error');
             }
         });
 
-        forwardButton.addEventListener('click', () => {
-            motorState = 'forward';
-            sendCommand('1');
-            updateButtonState();
-        });
-
-        reverseButton.addEventListener('click', () => {
-            motorState = 'reverse';
-            sendCommand('2');
-            updateButtonState();
-        });
-
-        stopButton.addEventListener('click', () => {
-            motorState = 'stopped';
-            sendCommand('0');
-            updateButtonState();
+        Object.keys(motors).forEach(motorId => {
+            const motor = motors[motorId];
+            motor.buttons.forward.addEventListener('click', () => {
+                motor.state = 'forward';
+                sendCommand(`${motorId}:1`);
+                updateAllButtonStates();
+            });
+            motor.buttons.reverse.addEventListener('click', () => {
+                motor.state = 'reverse';
+                sendCommand(`${motorId}:2`);
+                updateAllButtonStates();
+            });
+            motor.buttons.stop.addEventListener('click', () => {
+                motor.state = 'stopped';
+                sendCommand(`${motorId}:0`);
+                updateAllButtonStates();
+            });
         });
 
         function sendCommand(command) {
-            if (!bleCharacteristic) {
-                updateStatus('No hay conexión', 'error');
-                return;
-            }
+            if (!bleCharacteristic) return;
             const encoder = new TextEncoder();
-            bleCharacteristic.writeValue(encoder.encode(command))
-                .catch(error => {
-                    console.error('Error al enviar comando:', error);
-                    updateStatus(`Error al enviar: ${error.message}`, 'error');
-                });
+            bleCharacteristic.writeValue(encoder.encode(command)).catch(err => console.error('Error al enviar:', err));
         }
         
         function onDisconnected() {
             updateStatus('Dispositivo desconectado', 'error');
             bleCharacteristic = null;
-            motorState = 'stopped';
+            motors.M1.state = 'stopped';
+            motors.M2.state = 'stopped';
             connectButton.classList.remove('hidden');
             controlsDiv.classList.add('hidden');
         }
