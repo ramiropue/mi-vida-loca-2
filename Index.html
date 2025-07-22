@@ -24,19 +24,10 @@
 
         <main>
             <button id="connectButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out">
-                Buscar Dispositivos
+                Conectar al ESP32
             </button>
 
             <div id="controls" class="mt-6 space-y-6 hidden">
-                <!-- Master Controls -->
-                <div class="p-4 border-2 border-indigo-500 rounded-lg bg-indigo-50">
-                    <h2 class="text-lg font-semibold text-indigo-800 mb-4">Control General</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button id="masterOnButton" class="bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600 flex items-center justify-center space-x-2 transition"><span>Encender Ambos</span></button>
-                        <button id="masterOffButton" class="bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition"><span>Parar Ambos</span></button>
-                    </div>
-                </div>
-
                 <!-- Controles Motor 1 -->
                 <div class="p-4 border rounded-lg">
                     <h2 class="text-lg font-semibold text-gray-700 mb-4">Motor 1</h2>
@@ -70,22 +61,28 @@
         let bleCharacteristic = null;
 
         const motors = {
-            M1: { state: 'stopped', buttons: { forward: document.getElementById('forwardButton1'), reverse: document.getElementById('reverseButton1'), stop: document.getElementById('stopButton1') }},
-            M2: { state: 'stopped', buttons: { forward: document.getElementById('forwardButton2'), reverse: document.getElementById('reverseButton2'), stop: document.getElementById('stopButton2') }}
-        };
-        const masterButtons = {
-            on: document.getElementById('masterOnButton'),
-            off: document.getElementById('masterOffButton')
+            M1: {
+                state: 'stopped',
+                buttons: {
+                    forward: document.getElementById('forwardButton1'),
+                    reverse: document.getElementById('reverseButton1'),
+                    stop: document.getElementById('stopButton1'),
+                }
+            },
+            M2: {
+                state: 'stopped',
+                buttons: {
+                    forward: document.getElementById('forwardButton2'),
+                    reverse: document.getElementById('reverseButton2'),
+                    stop: document.getElementById('stopButton2'),
+                }
+            }
         };
 
         const updateAllButtonStates = () => {
-            let anyMotorOn = false;
-            let allMotorsStopped = true;
-
             for (const motorId in motors) {
                 const motor = motors[motorId];
                 const isStopped = motor.state === 'stopped';
-                
                 motor.buttons.forward.disabled = !isStopped;
                 motor.buttons.reverse.disabled = !isStopped;
                 motor.buttons.stop.disabled = isStopped;
@@ -93,65 +90,48 @@
                 motor.buttons.forward.classList.toggle('btn-disabled', !isStopped);
                 motor.buttons.reverse.classList.toggle('btn-disabled', !isStopped);
                 motor.buttons.stop.classList.toggle('btn-disabled', isStopped);
-
-                if (!isStopped) {
-                    anyMotorOn = true;
-                    allMotorsStopped = false;
-                }
             }
-            
-            masterButtons.on.disabled = !allMotorsStopped;
-            masterButtons.on.classList.toggle('btn-disabled', !allMotorsStopped);
-            
-            masterButtons.off.disabled = !anyMotorOn;
-            masterButtons.off.classList.toggle('btn-disabled', !anyMotorOn);
         };
         
         connectButton.addEventListener('click', async () => {
             try {
-                updateStatus('Buscando dispositivos...');
+                updateStatus('Buscando el ESP32...');
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [SERVICE_UUID] 
+                    filters: [{ name: 'Control Dual Motor ESP32' }],
+                    optionalServices: [SERVICE_UUID]
                 });
-                updateStatus('Dispositivo encontrado. Conectando...');
+                updateStatus('Conectando...');
                 const server = await device.gatt.connect();
-                updateStatus('Conectado. Esperando al ESP32...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                updateStatus('Buscando servicios...');
                 const service = await server.getPrimaryService(SERVICE_UUID);
-                updateStatus('Obteniendo característica...');
                 bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-                updateStatus(`Conectado y listo: ${device.name}`, 'success');
+                updateStatus(`Conectado a ${device.name}`, 'success');
                 connectButton.classList.add('hidden');
                 controlsDiv.classList.remove('hidden');
                 device.addEventListener('gattserverdisconnected', onDisconnected);
                 updateAllButtonStates();
             } catch (error) {
-                console.error('Error detallado:', error);
-                updateStatus(error.name === 'NotFoundError' ? 'No se encontró ningún dispositivo.' : `Error: ${error.message}`, 'error');
+                console.error('Error:', error);
+                updateStatus(error.name === 'NotFoundError' ? 'No se encontrÃ³ el ESP32.' : `Error: ${error.message}`, 'error');
             }
         });
 
         Object.keys(motors).forEach(motorId => {
             const motor = motors[motorId];
-            motor.buttons.forward.addEventListener('click', () => { motor.state = 'forward'; sendCommand(`${motorId}:1`); updateAllButtonStates(); });
-            motor.buttons.reverse.addEventListener('click', () => { motor.state = 'reverse'; sendCommand(`${motorId}:2`); updateAllButtonStates(); });
-            motor.buttons.stop.addEventListener('click', () => { motor.state = 'stopped'; sendCommand(`${motorId}:0`); updateAllButtonStates(); });
-        });
-        
-        masterButtons.on.addEventListener('click', () => {
-            motors.M1.state = 'forward';
-            motors.M2.state = 'forward';
-            sendCommand('M_ALL:1');
-            updateAllButtonStates();
-        });
-
-        masterButtons.off.addEventListener('click', () => {
-            motors.M1.state = 'stopped';
-            motors.M2.state = 'stopped';
-            sendCommand('M_ALL:0');
-            updateAllButtonStates();
+            motor.buttons.forward.addEventListener('click', () => {
+                motor.state = 'forward';
+                sendCommand(`${motorId}:1`);
+                updateAllButtonStates();
+            });
+            motor.buttons.reverse.addEventListener('click', () => {
+                motor.state = 'reverse';
+                sendCommand(`${motorId}:2`);
+                updateAllButtonStates();
+            });
+            motor.buttons.stop.addEventListener('click', () => {
+                motor.state = 'stopped';
+                sendCommand(`${motorId}:0`);
+                updateAllButtonStates();
+            });
         });
 
         function sendCommand(command) {
