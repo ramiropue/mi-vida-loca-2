@@ -73,9 +73,7 @@
                 updateStatus('Buscando dispositivo...');
                 
                 // 1. Solicitar al navegador que busque dispositivos BLE
-                // ---- CAMBIO PARA DIAGNÓSTICO ----
-                // Ahora aceptamos cualquier dispositivo para ver si el nuestro aparece en la lista.
-                // Seguiremos pidiendo acceso al servicio que nos interesa con 'optionalServices'.
+                // Aceptamos cualquier dispositivo, pero pedimos acceso al servicio que nos interesa.
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: [SERVICE_UUID]
@@ -161,13 +159,3 @@
     </script>
 </body>
 </html>
-```
-
-### Pasos a Seguir:
-
-1.  Abre esta nueva versión de la WebApp en tu móvil.
-2.  Pulsa "Conectar al ESP32".
-3.  Ahora debería aparecer una lista con **todos** los dispositivos Bluetooth LE cercanos (auriculares, smartwatches, etc.).
-4.  Busca en esa lista el nombre de tu placa: **"Control Motor ESP32"**.
-
-Por favor, dime cuál de los dos resultados obtienes. Esto nos dará la pista definiti
