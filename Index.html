@@ -61,22 +61,8 @@
         let bleCharacteristic = null;
 
         const motors = {
-            M1: {
-                state: 'stopped',
-                buttons: {
-                    forward: document.getElementById('forwardButton1'),
-                    reverse: document.getElementById('reverseButton1'),
-                    stop: document.getElementById('stopButton1'),
-                }
-            },
-            M2: {
-                state: 'stopped',
-                buttons: {
-                    forward: document.getElementById('forwardButton2'),
-                    reverse: document.getElementById('reverseButton2'),
-                    stop: document.getElementById('stopButton2'),
-                }
-            }
+            M1: { state: 'stopped', buttons: { forward: document.getElementById('forwardButton1'), reverse: document.getElementById('reverseButton1'), stop: document.getElementById('stopButton1') }},
+            M2: { state: 'stopped', buttons: { forward: document.getElementById('forwardButton2'), reverse: document.getElementById('reverseButton2'), stop: document.getElementById('stopButton2') }}
         };
 
         const updateAllButtonStates = () => {
@@ -86,7 +72,6 @@
                 motor.buttons.forward.disabled = !isStopped;
                 motor.buttons.reverse.disabled = !isStopped;
                 motor.buttons.stop.disabled = isStopped;
-
                 motor.buttons.forward.classList.toggle('btn-disabled', !isStopped);
                 motor.buttons.reverse.classList.toggle('btn-disabled', !isStopped);
                 motor.buttons.stop.classList.toggle('btn-disabled', isStopped);
@@ -97,46 +82,45 @@
             try {
                 updateStatus('Buscando dispositivos...');
                 
-                // Usamos acceptAllDevices para máxima compatibilidad con iOS
+                // Paso 1: Descubrir el dispositivo sin pedir servicios opcionales.
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [SERVICE_UUID]
+                    acceptAllDevices: true
                 });
 
-                updateStatus('Conectando...');
+                updateStatus('Dispositivo encontrado. Conectando...');
                 const server = await device.gatt.connect();
-                // Puede que necesite una pequeña pausa para que el ESP32 active los servicios
-                await new Promise(resolve => setTimeout(resolve, 500)); 
+                
+                updateStatus('Conectado. Buscando servicios...');
+                // Paso 2: Una vez conectado, buscar el servicio específico.
                 const service = await server.getPrimaryService(SERVICE_UUID);
+                
+                updateStatus('Servicio encontrado. Obteniendo característica...');
                 bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-                updateStatus(`Conectado a ${device.name}`, 'success');
+                
+                updateStatus(`Conectado y listo: ${device.name}`, 'success');
                 connectButton.classList.add('hidden');
                 controlsDiv.classList.remove('hidden');
                 device.addEventListener('gattserverdisconnected', onDisconnected);
                 updateAllButtonStates();
+
             } catch (error) {
-                console.error('Error:', error);
-                updateStatus(error.name === 'NotFoundError' ? 'No se encontró ningún dispositivo.' : `Error: ${error.message}`, 'error');
+                console.error('Error detallado:', error);
+                // Manejo de errores mejorado para dar más información.
+                let errorMessage = 'Error desconocido durante la conexión.';
+                if (error.name === 'NotFoundError') {
+                    errorMessage = 'Búsqueda cancelada o no se encontró el dispositivo.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                updateStatus(errorMessage, 'error');
             }
         });
 
         Object.keys(motors).forEach(motorId => {
             const motor = motors[motorId];
-            motor.buttons.forward.addEventListener('click', () => {
-                motor.state = 'forward';
-                sendCommand(`${motorId}:1`);
-                updateAllButtonStates();
-            });
-            motor.buttons.reverse.addEventListener('click', () => {
-                motor.state = 'reverse';
-                sendCommand(`${motorId}:2`);
-                updateAllButtonStates();
-            });
-            motor.buttons.stop.addEventListener('click', () => {
-                motor.state = 'stopped';
-                sendCommand(`${motorId}:0`);
-                updateAllButtonStates();
-            });
+            motor.buttons.forward.addEventListener('click', () => { motor.state = 'forward'; sendCommand(`${motorId}:1`); updateAllButtonStates(); });
+            motor.buttons.reverse.addEventListener('click', () => { motor.state = 'reverse'; sendCommand(`${motorId}:2`); updateAllButtonStates(); });
+            motor.buttons.stop.addEventListener('click', () => { motor.state = 'stopped'; sendCommand(`${motorId}:0`); updateAllButtonStates(); });
         });
 
         function sendCommand(command) {
