@@ -1,181 +1,110 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Dual de Motores BLE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .btn-disabled { cursor: not-allowed; opacity: 0.5; background-color: #9ca3af !important; }
-    </style>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+/*
+  Código Completo para Control de Dos Motores con Control Maestro
+  
+  VERSIÓN CORREGIDA PARA RELÉS "ACTIVE-LOW" (Lógica Invertida)
+  - Se envía LOW para ENCENDER el relé.
+  - Se envía HIGH para APAGAR el relé.
+  - El cableado físico debe estar en los terminales NO (Normalmente Abierto) por seguridad.
+*/
 
-    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-6 text-center">
-        
-        <header class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Control Dual de Motores</h1>
-            <p id="status" class="text-sm text-gray-500 mt-2">Desconectado</p>
-        </header>
+#include <ArduinoBLE.h>
 
-        <main>
-            <button id="connectButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out">
-                Buscar Dispositivos
-            </button>
+// --- Definición de estados para la lógica invertida ---
+#define RELAY_ON  LOW
+#define RELAY_OFF HIGH
 
-            <div id="controls" class="mt-6 space-y-6 hidden">
-                <!-- Master Controls -->
-                <div class="p-4 border-2 border-indigo-500 rounded-lg bg-indigo-50">
-                    <h2 class="text-lg font-semibold text-indigo-800 mb-4">Control General</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button id="masterOnButton" class="bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600 flex items-center justify-center space-x-2 transition"><span>Encender Ambos</span></button>
-                        <button id="masterOffButton" class="bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition"><span>Parar Ambos</span></button>
-                    </div>
-                </div>
+// --- CONFIGURACIÓN DE PINES ---
+const int relayM1_Forward = 12;
+const int relayM1_Reverse = 13;
+const int relayM2_Forward = 27;
+const int relayM2_Reverse = 26;
 
-                <!-- Controles Motor 1 -->
-                <div class="p-4 border rounded-lg">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Motor 1</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button id="forwardButton1" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition"><span>Horario</span></button>
-                        <button id="reverseButton1" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition"><span>Antihorario</span></button>
-                    </div>
-                    <button id="stopButton1" class="mt-4 w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition"><span>Paro</span></button>
-                </div>
+// --- CONFIGURACIÓN BLE ---
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-                <!-- Controles Motor 2 -->
-                <div class="p-4 border rounded-lg">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Motor 2</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button id="forwardButton2" class="bg-sky-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-600 flex items-center justify-center space-x-2 transition"><span>Horario</span></button>
-                        <button id="reverseButton2" class="bg-sky-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-600 flex items-center justify-center space-x-2 transition"><span>Antihorario</span></button>
-                    </div>
-                    <button id="stopButton2" class="mt-4 w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition"><span>Paro</span></button>
-                </div>
-            </div>
-        </main>
-    </div>
+BLEService motorService(SERVICE_UUID);
+BLEStringCharacteristic controlCharacteristic(CHARACTERISTIC_UUID, BLERead | BLEWrite, 7);
+bool serviceAdded = false;
 
-    <script>
-        const connectButton = document.getElementById('connectButton');
-        const controlsDiv = document.getElementById('controls');
-        const statusDisplay = document.getElementById('status');
+// --- FUNCIÓN CALLBACK ---
+void onCommandWritten(BLEDevice central, BLECharacteristic characteristic) {
+  String command = controlCharacteristic.value();
+  command.trim();
+  Serial.print("Comando recibido: ");
+  Serial.println(command);
 
-        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-        let bleCharacteristic = null;
+  String target = command.substring(0, command.indexOf(':'));
+  String action = command.substring(command.indexOf(':') + 1);
 
-        const motors = {
-            M1: { state: 'stopped', buttons: { forward: document.getElementById('forwardButton1'), reverse: document.getElementById('reverseButton1'), stop: document.getElementById('stopButton1') }},
-            M2: { state: 'stopped', buttons: { forward: document.getElementById('forwardButton2'), reverse: document.getElementById('reverseButton2'), stop: document.getElementById('stopButton2') }}
-        };
-        const masterButtons = {
-            on: document.getElementById('masterOnButton'),
-            off: document.getElementById('masterOffButton')
-        };
+  if (target == "M1") {
+    if (action == "1") { digitalWrite(relayM1_Reverse, RELAY_OFF); digitalWrite(relayM1_Forward, RELAY_ON); }
+    else if (action == "2") { digitalWrite(relayM1_Forward, RELAY_OFF); digitalWrite(relayM1_Reverse, RELAY_ON); }
+    else if (action == "0") { digitalWrite(relayM1_Forward, RELAY_OFF); digitalWrite(relayM1_Reverse, RELAY_OFF); }
+  } else if (target == "M2") {
+    if (action == "1") { digitalWrite(relayM2_Reverse, RELAY_OFF); digitalWrite(relayM2_Forward, RELAY_ON); }
+    else if (action == "2") { digitalWrite(relayM2_Forward, RELAY_OFF); digitalWrite(relayM2_Reverse, RELAY_ON); }
+    else if (action == "0") { digitalWrite(relayM2_Forward, RELAY_OFF); digitalWrite(relayM2_Reverse, RELAY_OFF); }
+  } else if (target == "M_ALL") {
+    if (action == "1") { // Encender ambos en horario
+      digitalWrite(relayM1_Reverse, RELAY_OFF);
+      digitalWrite(relayM2_Reverse, RELAY_OFF);
+      digitalWrite(relayM1_Forward, RELAY_ON);
+      digitalWrite(relayM2_Forward, RELAY_ON);
+    } else if (action == "0") { // Parar ambos
+      digitalWrite(relayM1_Forward, RELAY_OFF);
+      digitalWrite(relayM1_Reverse, RELAY_OFF);
+      digitalWrite(relayM2_Forward, RELAY_OFF);
+      digitalWrite(relayM2_Reverse, RELAY_OFF);
+    }
+  }
+}
 
-        const updateAllButtonStates = () => {
-            let anyMotorOn = false;
-            let allMotorsStopped = true;
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("--- Iniciando Control Dual (Lógica Invertida) ---");
 
-            for (const motorId in motors) {
-                const motor = motors[motorId];
-                const isStopped = motor.state === 'stopped';
-                
-                motor.buttons.forward.disabled = !isStopped;
-                motor.buttons.reverse.disabled = !isStopped;
-                motor.buttons.stop.disabled = isStopped;
+  pinMode(relayM1_Forward, OUTPUT); pinMode(relayM1_Reverse, OUTPUT);
+  pinMode(relayM2_Forward, OUTPUT); pinMode(relayM2_Reverse, OUTPUT);
+  // Estado inicial de seguridad: todos los relés apagados (señal HIGH)
+  digitalWrite(relayM1_Forward, RELAY_OFF);
+  digitalWrite(relayM1_Reverse, RELAY_OFF);
+  digitalWrite(relayM2_Forward, RELAY_OFF);
+  digitalWrite(relayM2_Reverse, RELAY_OFF);
 
-                motor.buttons.forward.classList.toggle('btn-disabled', !isStopped);
-                motor.buttons.reverse.classList.toggle('btn-disabled', !isStopped);
-                motor.buttons.stop.classList.toggle('btn-disabled', isStopped);
+  if (!BLE.begin()) {
+    Serial.println("FALLO CRÍTICO: No se pudo iniciar el módulo BLE.");
+    while (1);
+  }
 
-                if (!isStopped) {
-                    anyMotorOn = true;
-                    allMotorsStopped = false;
-                }
-            }
-            
-            masterButtons.on.disabled = !allMotorsStopped;
-            masterButtons.on.classList.toggle('btn-disabled', !allMotorsStopped);
-            
-            masterButtons.off.disabled = !anyMotorOn;
-            masterButtons.off.classList.toggle('btn-disabled', !anyMotorOn);
-        };
-        
-        connectButton.addEventListener('click', async () => {
-            try {
-                updateStatus('Buscando dispositivos...');
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [SERVICE_UUID] 
-                });
-                updateStatus('Dispositivo encontrado. Conectando...');
-                const server = await device.gatt.connect();
-                updateStatus('Conectado. Esperando al ESP32...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                updateStatus('Buscando servicios...');
-                const service = await server.getPrimaryService(SERVICE_UUID);
-                updateStatus('Obteniendo característica...');
-                bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-                updateStatus(`Conectado y listo: ${device.name}`, 'success');
-                connectButton.classList.add('hidden');
-                controlsDiv.classList.remove('hidden');
-                device.addEventListener('gattserverdisconnected', onDisconnected);
-                updateAllButtonStates();
-            } catch (error) {
-                console.error('Error detallado:', error);
-                updateStatus(error.name === 'NotFoundError' ? 'No se encontró ningún dispositivo.' : `Error: ${error.message}`, 'error');
-            }
-        });
+  BLE.setLocalName("mi vida loca");
+  BLE.advertise();
+  Serial.println("Éxito: Anuncio simple iniciado.");
+  Serial.println("------------------------------------------------");
+}
 
-        Object.keys(motors).forEach(motorId => {
-            const motor = motors[motorId];
-            motor.buttons.forward.addEventListener('click', () => { motor.state = 'forward'; sendCommand(`${motorId}:1`); updateAllButtonStates(); });
-            motor.buttons.reverse.addEventListener('click', () => { motor.state = 'reverse'; sendCommand(`${motorId}:2`); updateAllButtonStates(); });
-            motor.buttons.stop.addEventListener('click', () => { motor.state = 'stopped'; sendCommand(`${motorId}:0`); updateAllButtonStates(); });
-        });
-        
-        masterButtons.on.addEventListener('click', () => {
-            motors.M1.state = 'forward';
-            motors.M2.state = 'forward';
-            sendCommand('M_ALL:1');
-            updateAllButtonStates();
-        });
-
-        masterButtons.off.addEventListener('click', () => {
-            motors.M1.state = 'stopped';
-            motors.M2.state = 'stopped';
-            sendCommand('M_ALL:0');
-            updateAllButtonStates();
-        });
-
-        function sendCommand(command) {
-            if (!bleCharacteristic) return;
-            const encoder = new TextEncoder();
-            bleCharacteristic.writeValue(encoder.encode(command)).catch(err => console.error('Error al enviar:', err));
-        }
-        
-        function onDisconnected() {
-            updateStatus('Dispositivo desconectado', 'error');
-            bleCharacteristic = null;
-            motors.M1.state = 'stopped';
-            motors.M2.state = 'stopped';
-            connectButton.classList.remove('hidden');
-            controlsDiv.classList.add('hidden');
-        }
-
-        function updateStatus(message, type = 'info') {
-            statusDisplay.textContent = message;
-            statusDisplay.className = 'text-sm mt-2';
-            if (type === 'success') statusDisplay.classList.add('text-green-600');
-            else if (type === 'error') statusDisplay.classList.add('text-red-600');
-            else statusDisplay.classList.add('text-gray-500');
-        }
-    </script>
-</body>
-</html>
+void loop() {
+  BLEDevice central = BLE.central();
+  if (central) {
+    Serial.print("Dispositivo conectado: ");
+    Serial.println(central.address());
+    delay(200);
+    if (!serviceAdded) {
+      Serial.println("Activando servicios...");
+      BLE.stopAdvertise();
+      motorService.addCharacteristic(controlCharacteristic);
+      BLE.addService(motorService);
+      controlCharacteristic.setEventHandler(BLEWritten, onCommandWritten);
+      serviceAdded = true;
+      BLE.advertise();
+      Serial.println("Servicios activados.");
+    }
+    while (central.connected()) {
+      BLE.poll();
+    }
+    Serial.print("Dispositivo desconectado: ");
+    Serial.println(central.address());
+    serviceAdded = false;
+  }
+}
