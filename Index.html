@@ -24,7 +24,7 @@
 
         <main>
             <button id="connectButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out">
-                Conectar a "mi vida loca"
+                Buscar Dispositivos
             </button>
 
             <div id="controls" class="mt-6 space-y-6 hidden">
@@ -80,19 +80,19 @@
         
         connectButton.addEventListener('click', async () => {
             try {
-                updateStatus('Buscando "mi vida loca"...');
+                updateStatus('Buscando dispositivos...');
                 
-                // **Filtro por nombre exacto**
+                // **CAMBIO IMPORTANTE**: Volvemos a buscar todos los dispositivos.
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'mi vida loca' }],
-                    optionalServices: [SERVICE_UUID] // Pedimos acceso al servicio para usarlo después
+                    acceptAllDevices: true,
+                    optionalServices: [SERVICE_UUID] 
                 });
 
                 updateStatus('Dispositivo encontrado. Conectando...');
                 const server = await device.gatt.connect();
                 
                 updateStatus('Conectado. Esperando al ESP32...');
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa de sincronización
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 updateStatus('Buscando servicios...');
                 const service = await server.getPrimaryService(SERVICE_UUID);
@@ -110,7 +110,7 @@
                 console.error('Error detallado:', error);
                 let errorMessage = 'Error desconocido.';
                 if (error.name === 'NotFoundError') {
-                    errorMessage = 'No se encontró el dispositivo "mi vida loca".';
+                    errorMessage = 'No se encontró ningún dispositivo.';
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
