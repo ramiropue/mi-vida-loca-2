@@ -90,11 +90,14 @@
                 updateStatus('Dispositivo encontrado. Conectando...');
                 const server = await device.gatt.connect();
                 
-                updateStatus('Conectado. Buscando servicios...');
-                // Paso 2: Una vez conectado, buscar el servicio específico.
+                // **PAUSA DE SINCRONIZACIÓN**
+                updateStatus('Conectado. Esperando al ESP32...');
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa de 1 segundo
+
+                updateStatus('Buscando servicios...');
                 const service = await server.getPrimaryService(SERVICE_UUID);
                 
-                updateStatus('Servicio encontrado. Obteniendo característica...');
+                updateStatus('Obteniendo característica...');
                 bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
                 
                 updateStatus(`Conectado y listo: ${device.name}`, 'success');
@@ -105,14 +108,13 @@
 
             } catch (error) {
                 console.error('Error detallado:', error);
-                // Manejo de errores mejorado para dar más información.
-                let errorMessage = 'Error desconocido durante la conexión.';
+                let errorMessage = 'Error desconocido.';
                 if (error.name === 'NotFoundError') {
-                    errorMessage = 'Búsqueda cancelada o no se encontró el dispositivo.';
+                    errorMessage = 'Búsqueda cancelada.';
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
-                updateStatus(errorMessage, 'error');
+                updateStatus(`Error: ${errorMessage}`, 'error');
             }
         });
 
