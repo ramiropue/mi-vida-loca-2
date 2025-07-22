@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Motor BLE</title>
-    <!-- Usamos Tailwind CSS para un diseño limpio y rápido -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,12 +11,13 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Evita el flash azul al tocar botones en móviles */
+            -webkit-tap-highlight-color: transparent;
         }
         /* Estilo para los botones cuando están desactivados */
         .btn-disabled {
             cursor: not-allowed;
             opacity: 0.5;
+            background-color: #9ca3af; /* gray-400 */
         }
     </style>
 </head>
@@ -31,19 +31,23 @@
         </header>
 
         <main>
-            <!-- Botón de Conexión -->
             <button id="connectButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out">
                 Conectar al ESP32
             </button>
 
-            <!-- Controles del Motor -->
-            <div id="controls" class="mt-6 grid grid-cols-2 gap-4 hidden">
-                <button id="startButton" class="bg-green-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50 transition duration-300 ease-in-out flex items-center justify-center space-x-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span>Marcha</span>
-                </button>
-                <button id="stopButton" class="bg-red-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50 transition duration-300 ease-in-out flex items-center justify-center space-x-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div id="controls" class="mt-6 space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="forwardButton" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition duration-300 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
+                        <span>Horario</span>
+                    </button>
+                    <button id="reverseButton" class="bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition duration-300 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
+                        <span>Antihorario</span>
+                    </button>
+                </div>
+                <button id="stopButton" class="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition duration-300 ease-in-out btn-disabled" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" /></svg>
                     <span>Paro</span>
                 </button>
             </div>
@@ -52,82 +56,86 @@
     </div>
 
     <script>
-        // Referencias a los elementos del DOM
         const connectButton = document.getElementById('connectButton');
-        const startButton = document.getElementById('startButton');
+        const controlsDiv = document.getElementById('controls');
+        const forwardButton = document.getElementById('forwardButton');
+        const reverseButton = document.getElementById('reverseButton');
         const stopButton = document.getElementById('stopButton');
         const statusDisplay = document.getElementById('status');
-        const controlsDiv = document.getElementById('controls');
 
-        // UUIDs que deben coincidir exactamente con los del código del ESP32
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
         const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
-        let bleCharacteristic = null; // Variable para guardar la característica BLE
+        let bleCharacteristic = null;
+        let motorState = 'stopped'; // 'stopped', 'forward', 'reverse'
 
-        // --- LÓGICA DE LA APLICACIÓN ---
-
-        // Evento para el botón de conectar
+        const updateButtonState = () => {
+            if (motorState === 'stopped') {
+                forwardButton.disabled = false;
+                forwardButton.classList.remove('btn-disabled');
+                reverseButton.disabled = false;
+                reverseButton.classList.remove('btn-disabled');
+                stopButton.disabled = true;
+                stopButton.classList.add('btn-disabled');
+            } else {
+                forwardButton.disabled = true;
+                forwardButton.classList.add('btn-disabled');
+                reverseButton.disabled = true;
+                reverseButton.classList.add('btn-disabled');
+                stopButton.disabled = false;
+                stopButton.classList.remove('btn-disabled');
+            }
+        };
+        
         connectButton.addEventListener('click', async () => {
             try {
-                updateStatus('Buscando dispositivo...');
-                
-                // 1. Solicitar al navegador que busque dispositivos BLE
-                // Aceptamos cualquier dispositivo, pero pedimos acceso al servicio que nos interesa.
+                updateStatus('Buscando el ESP32...');
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
+                    filters: [{ name: 'Control Motor ESP32' }],
                     optionalServices: [SERVICE_UUID]
                 });
-
-                updateStatus('Conectando al dispositivo...');
-                
-                // 2. Conectar al servidor GATT del dispositivo
+                updateStatus('Conectando...');
                 const server = await device.gatt.connect();
-
-                // 3. Obtener el servicio BLE
                 const service = await server.getPrimaryService(SERVICE_UUID);
-
-                // 4. Obtener la característica BLE
                 bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-                // Si todo ha ido bien, actualizamos la interfaz
                 updateStatus(`Conectado a ${device.name}`, 'success');
-                connectButton.classList.add('hidden'); // Ocultar botón de conectar
-                controlsDiv.classList.remove('hidden'); // Mostrar controles
-
-                // Escuchar por si el dispositivo se desconecta
+                connectButton.classList.add('hidden');
+                controlsDiv.classList.remove('hidden');
                 device.addEventListener('gattserverdisconnected', onDisconnected);
-
+                updateButtonState();
             } catch (error) {
                 console.error('Error en la conexión BLE:', error);
-                // El error 'User cancelled' es normal si el usuario cierra la ventana de selección.
-                if (error.name !== 'NotFoundError') {
-                    updateStatus(`Error: ${error.message}`, 'error');
+                if (error.name === 'NotFoundError') {
+                    updateStatus('No se encontró el ESP32. Asegúrate de que está encendido y cerca.', 'error');
                 } else {
-                    updateStatus('Búsqueda cancelada.', 'info');
+                    updateStatus(`Error: ${error.message}`, 'error');
                 }
             }
         });
 
-        // Evento para el botón de INICIAR
-        startButton.addEventListener('click', () => {
+        forwardButton.addEventListener('click', () => {
+            motorState = 'forward';
             sendCommand('1');
-            updateStatus('Motor en marcha', 'success');
+            updateButtonState();
         });
 
-        // Evento para el botón de PARAR
+        reverseButton.addEventListener('click', () => {
+            motorState = 'reverse';
+            sendCommand('2');
+            updateButtonState();
+        });
+
         stopButton.addEventListener('click', () => {
+            motorState = 'stopped';
             sendCommand('0');
-            updateStatus('Motor parado', 'success');
+            updateButtonState();
         });
 
-        // Función para enviar un comando a la característica BLE
         function sendCommand(command) {
             if (!bleCharacteristic) {
                 updateStatus('No hay conexión', 'error');
                 return;
             }
-            // Los datos se deben enviar como un Array de bytes (Uint8Array)
             const encoder = new TextEncoder();
             bleCharacteristic.writeValue(encoder.encode(command))
                 .catch(error => {
@@ -136,25 +144,20 @@
                 });
         }
         
-        // Función que se ejecuta cuando el dispositivo se desconecta
         function onDisconnected() {
             updateStatus('Dispositivo desconectado', 'error');
             bleCharacteristic = null;
+            motorState = 'stopped';
             connectButton.classList.remove('hidden');
             controlsDiv.classList.add('hidden');
         }
 
-        // Función para actualizar el texto de estado y su color
         function updateStatus(message, type = 'info') {
             statusDisplay.textContent = message;
-            statusDisplay.classList.remove('text-gray-500', 'text-green-600', 'text-red-600');
-            if (type === 'success') {
-                statusDisplay.classList.add('text-green-600');
-            } else if (type === 'error') {
-                statusDisplay.classList.add('text-red-600');
-            } else {
-                statusDisplay.classList.add('text-gray-500');
-            }
+            statusDisplay.className = 'text-sm mt-2';
+            if (type === 'success') statusDisplay.classList.add('text-green-600');
+            else if (type === 'error') statusDisplay.classList.add('text-red-600');
+            else statusDisplay.classList.add('text-gray-500');
         }
     </script>
 </body>
