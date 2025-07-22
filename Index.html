@@ -24,7 +24,7 @@
 
         <main>
             <button id="connectButton" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out">
-                Conectar al ESP32
+                Conectar a "mi vida loca"
             </button>
 
             <div id="controls" class="mt-6 space-y-6 hidden">
@@ -80,19 +80,19 @@
         
         connectButton.addEventListener('click', async () => {
             try {
-                updateStatus('Buscando dispositivos...');
+                updateStatus('Buscando "mi vida loca"...');
                 
-                // Paso 1: Descubrir el dispositivo sin pedir servicios opcionales.
+                // **Filtro por nombre exacto**
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true
+                    filters: [{ name: 'mi vida loca' }],
+                    optionalServices: [SERVICE_UUID] // Pedimos acceso al servicio para usarlo después
                 });
 
                 updateStatus('Dispositivo encontrado. Conectando...');
                 const server = await device.gatt.connect();
                 
-                // **PAUSA DE SINCRONIZACIÓN**
                 updateStatus('Conectado. Esperando al ESP32...');
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa de 1 segundo
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa de sincronización
 
                 updateStatus('Buscando servicios...');
                 const service = await server.getPrimaryService(SERVICE_UUID);
@@ -110,7 +110,7 @@
                 console.error('Error detallado:', error);
                 let errorMessage = 'Error desconocido.';
                 if (error.name === 'NotFoundError') {
-                    errorMessage = 'Búsqueda cancelada.';
+                    errorMessage = 'No se encontró el dispositivo "mi vida loca".';
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
