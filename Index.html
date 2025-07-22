@@ -95,10 +95,9 @@
         
         connectButton.addEventListener('click', async () => {
             try {
-                updateStatus('Buscando el ESP32...');
+                updateStatus('Buscando dispositivos...');
                 
-                // --- CAMBIO PARA COMPATIBILIDAD CON iOS ---
-                // Volvemos a buscar todos los dispositivos para asegurar que el navegador pueda ver el ESP32.
+                // Usamos acceptAllDevices para máxima compatibilidad con iOS
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: [SERVICE_UUID]
@@ -106,6 +105,8 @@
 
                 updateStatus('Conectando...');
                 const server = await device.gatt.connect();
+                // Puede que necesite una pequeña pausa para que el ESP32 active los servicios
+                await new Promise(resolve => setTimeout(resolve, 500)); 
                 const service = await server.getPrimaryService(SERVICE_UUID);
                 bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
                 updateStatus(`Conectado a ${device.name}`, 'success');
@@ -163,17 +164,3 @@
     </script>
 </body>
 </html>
-```
-
-### Pasos a seguir:
-
-1.  Abre esta nueva versión de la WebApp en el navegador **Bluefy** de tu iPhone.
-2.  Pulsa el botón "Conectar al ESP32".
-3.  Ahora debería aparecer una lista con todos los dispositivos Bluetooth cercanos que tu móvil detecte.
-
-Por favor, comprueba si en esa lista aparece tu dispositivo **"Control Dual Motor ESP32"**.
-
-* **Si aparece:** ¡Perfecto! Simplemente selecciónalo y todo debería funcionar. Esto confirma que el problema es el filtro por nombre en iOS. Podemos dejar la app así para asegurar que siempre funcione.
-* **Si sigue sin aparecer:** Esto sería muy raro, e indicaría un problema más profundo con el navegador Bluefy o la versión de iOS. En ese caso, podríamos probar con otro navegador compatible como "WebBLE".
-
-Quedo a la espera de tu respuesta. ¡Verás como así lo solucionam
